@@ -1,4 +1,5 @@
-﻿import pygame, math
+﻿import math
+import pygame
 from pygame.locals import *
 from pygame.sprite import Sprite
 
@@ -10,20 +11,6 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(topleft=pos)
 
 
-def collision(rectA, rectB):
-    if rectB.right < rectA.left:
-        return False
-    if rectB.bottom < rectA.top:
-        return False
-    if rectB.left > rectA.right:
-        return False
-    if rectB.top > rectA.bottom:
-        return False
-    if rectA.center > rectB.center:
-        return False
-    return True
-
-
 def collisionRadius(joueur, collision):
     if math.sqrt((collision.x - joueur.x) ** 2 + (collision.y - joueur.y) ** 2) <= 28:
         return True
@@ -33,20 +20,21 @@ def collisionRadius(joueur, collision):
 
 pygame.init()
 
+pygame.mixer.music.load("music.mp3")
+pygame.mixer.music.queue("music.mp3")
+pygame.mixer.music.play()
+
 fenetre = pygame.display.set_mode((600, 600))
 pygame.display.set_caption("PacMan")
 
 ch = Sprite()
 ch.image = pygame.image.load("contour_haut.png")
-ch.image = pygame.transform.scale(ch.image, (600, 271))
 ch.rect = ch.image.get_rect()
 ch.mask = pygame.mask.from_surface(ch.image)
 
 cb = Sprite()
 cb.image = pygame.image.load("contour_bas.png")
-cb.image = pygame.transform.scale(cb.image, (600, 271))
 cb.rect = cb.image.get_rect()
-cb.rect.topleft = (0, 329)
 cb.mask = pygame.mask.from_surface(cb.image)
 
 start = Sprite()
@@ -58,7 +46,7 @@ start.mask = pygame.mask.from_surface(start.image)
 piece2 = Sprite()
 piece2.image = pygame.image.load("piece2.png")
 piece2.rect = piece2.image.get_rect()
-piece2.rect.topleft = (389, 300)
+piece2.rect.topleft = (388, 304)
 piece2.mask = pygame.mask.from_surface(piece2.image)
 
 piece6 = Sprite()
@@ -82,7 +70,7 @@ piece7.mask = pygame.mask.from_surface(piece7.image)
 piece8 = Sprite()
 piece8.image = pygame.image.load("piece8.png")
 piece8.rect = piece8.image.get_rect()
-piece8.rect.topleft = (428, 192)
+piece8.rect.topleft = (426, 182)
 piece8.mask = pygame.mask.from_surface(piece8.image)
 
 piece9 = Sprite()
@@ -162,30 +150,60 @@ ghosts.add(ghost)
 pygame.display.flip()
 pygame.key.set_repeat(10)
 
-continuer = 1
-while continuer:
+background_accueil = pygame.image.load("background_accueil.jpg")
+
+menu_accueil = 1
+menu_jeu = 1
+
+while menu_accueil:
+    fenetre.blit(background_accueil, (0, 0))
+    if not pygame.mixer.music.get_busy():
+        pygame.mixer.music.load("music.mp3")
+        pygame.mixer.music.play(-1)
+
+    for event in pygame.event.get():
+        if event.type == KEYDOWN:
+            if event.key == K_RETURN:
+                menu_accueil = 0
+
+    pygame.display.flip()
+
+pygame.mixer.music.stop()
+
+while menu_jeu:
     fenetre.fill([0, 0, 0])
+
+    if not pygame.mixer.music.get_busy():
+        pygame.mixer.music.load("playing.mp3")
+        pygame.mixer.music.play(-1)
+
     for event in pygame.event.get():
         if event.type == KEYDOWN:
             if event.key == K_UP:
                 perso.rect = perso.rect.move(0, -2)
                 if collisionRadius(perso.rect, ghost.rect) or collideObstacles(perso):
                     perso.rect = perso.rect.move(0, 2)
-            if event.key == K_DOWN:
+            elif event.key == K_DOWN:
                 perso.rect = perso.rect.move(0, 2)
                 if collisionRadius(perso.rect, ghost.rect) or collideObstacles(perso):
                     perso.rect = perso.rect.move(0, -2)
-            if event.key == K_LEFT:
+            elif event.key == K_LEFT:
                 perso.rect = perso.rect.move(-2, 0)
                 if collisionRadius(perso.rect, ghost.rect) or collideObstacles(perso):
                     perso.rect = perso.rect.move(2, 0)
-            if event.key == K_RIGHT:
+            elif event.key == K_RIGHT:
                 perso.rect = perso.rect.move(2, 0)
                 if collisionRadius(perso.rect, ghost.rect) or collideObstacles(perso):
                     perso.rect = perso.rect.move(-2, 0)
+            elif event.key == K_ESCAPE:
+                menu_accueil = 1
+                menu_jeu = 0
         if event.type == QUIT:
-            continuer = 0
+            menu_accueil = 0
+            menu_jeu = 0
     obstacles_group.draw(fenetre)
     player_group.draw(fenetre)
     ghosts.draw(fenetre)
     pygame.display.flip()
+
+pygame.quit()
