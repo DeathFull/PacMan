@@ -195,6 +195,7 @@ pygame.display.flip()
 pygame.key.set_repeat(10)
 
 background_accueil = pygame.image.load("background_accueil.jpg")
+
 jouer = Sprite()
 jouer.image = pygame.image.load("bouton_jouer_normal.png")
 jouer.rect = jouer.image.get_rect()
@@ -208,80 +209,88 @@ quitter.mask = pygame.mask.from_surface(quitter.image)
 buttons = pygame.sprite.Group()
 buttons.add(jouer, quitter)
 
+appli = 1
 menu_accueil = 1
-menu_jeu = 1
+menu_jeu = 0
 
-while menu_accueil:
-    fenetre.blit(background_accueil, (0, 0))
-    if not pygame.mixer.music.get_busy():
-        pygame.mixer.music.load("music.mp3")
-        pygame.mixer.music.play(-1)
+while appli:
+    while menu_accueil:
+        fenetre.blit(background_accueil, (0, 0))
+        if not pygame.mixer.music.get_busy():
+            pygame.mixer.music.load("music.mp3")
+            pygame.mixer.music.play(-1)
 
-    for event in pygame.event.get():
-        if event.type == MOUSEBUTTONDOWN:
-            if event.button == 1:
-                if 141 < event.pos[0] < 458 and 243 < event.pos[1] < 355:
-                    jouer.image = pygame.image.load("bouton_jouer_click.png")
-                elif 29 < event.pos[0] < 162 and 527 < event.pos[1] < 575:
-                    quitter.image = pygame.image.load("bouton_quitter_click.png")
-        elif event.type == MOUSEBUTTONUP:
-            if event.button == 1:
-                if 141 < event.pos[0] < 458 and 243 < event.pos[1] < 355:
-                    menu_accueil = 0
-                else:
-                    jouer.image = pygame.image.load("bouton_jouer_normal.png")
+        for event in pygame.event.get():
+            if event.type == MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    if 141 < event.pos[0] < 458 and 243 < event.pos[1] < 355:
+                        jouer.image = pygame.image.load("bouton_jouer_click.png")
+                    elif 29 < event.pos[0] < 162 and 527 < event.pos[1] < 575:
+                        quitter.image = pygame.image.load("bouton_quitter_click.png")
+            elif event.type == MOUSEBUTTONUP:
+                if event.button == 1:
+                    if 141 < event.pos[0] < 458 and 243 < event.pos[1] < 355:
+                        pygame.mixer.music.fadeout(2000)
+                        menu_accueil = 0
+                        menu_jeu = 1
+                    else:
+                        jouer.image = pygame.image.load("bouton_jouer_normal.png")
 
-                if 29 < event.pos[0] < 162 and 527 < event.pos[1] < 575:
-                    menu_accueil = 0
-                    menu_jeu = 0
-                else:
-                    quitter.image = pygame.image.load("bouton_quitter_normal.png")
-        elif event.type == KEYDOWN:
-            if event.key == K_RETURN:
-                pygame.mixer.music.fadeout(2000)
-                menu_accueil = 0
-
-    buttons.draw(fenetre)
-    pygame.display.flip()
-
-while menu_jeu:
-    fenetre.fill([0, 0, 0])
-
-    if not pygame.mixer.music.get_busy():
-        pygame.mixer.music.load("playing.mp3")
-        pygame.mixer.music.play(-1)
-
-    for event in pygame.event.get():
-        if event.type == KEYDOWN:
-            if event.key == K_UP:
-                perso.image = pygame.image.load("perso_haut.png")
-                perso.rect = perso.rect.move(0, -2)
-                if collisionRadius(perso.rect, ghost.rect) or collideObstacles(perso):
-                    perso.rect = perso.rect.move(0, 2)
-            elif event.key == K_DOWN:
-                perso.image = pygame.image.load("perso_bas.png")
-                perso.rect = perso.rect.move(0, 2)
-                if collisionRadius(perso.rect, ghost.rect) or collideObstacles(perso):
-                    perso.rect = perso.rect.move(0, -2)
-            elif event.key == K_LEFT:
-                perso.image = pygame.image.load("perso_gauche.png")
-                perso.rect = perso.rect.move(-2, 0)
-                if collisionRadius(perso.rect, ghost.rect) or collideObstacles(perso):
-                    perso.rect = perso.rect.move(2, 0)
-            elif event.key == K_RIGHT:
-                perso.image = pygame.image.load("perso.png")
-                perso.rect = perso.rect.move(2, 0)
-                if collisionRadius(perso.rect, ghost.rect) or collideObstacles(perso):
-                    perso.rect = perso.rect.move(-2, 0)
-            elif event.key == K_ESCAPE:
-                menu_accueil = 1
+                    if 29 < event.pos[0] < 162 and 527 < event.pos[1] < 575:
+                        menu_jeu = 0
+                        menu_accueil = 0
+                        appli = 0
+                    else:
+                        quitter.image = pygame.image.load("bouton_quitter_normal.png")
+            elif event.type == QUIT:
                 menu_jeu = 0
-        if event.type == QUIT:
-            menu_accueil = 0
-            menu_jeu = 0
-    obstacles_group.draw(fenetre)
-    player_group.draw(fenetre)
-    ghosts.draw(fenetre)
-    pygame.display.flip()
+                menu_accueil = 0
+                appli = 0
+        buttons.draw(fenetre)
+        pygame.display.flip()
+
+    while menu_jeu:
+        fenetre.fill([0, 0, 0])
+
+        if not pygame.mixer.music.get_busy():
+            pygame.mixer.music.load("playing.mp3")
+            pygame.mixer.music.play(-1)
+
+        if pygame.mixer.music.get_pos() < 5:
+            pygame.mixer.music.set_pos(5)
+
+        for event in pygame.event.get():
+            if event.type == KEYDOWN:
+                if event.key == K_UP:
+                    perso.image = pygame.image.load("perso_haut.png")
+                    perso.rect = perso.rect.move(0, -2)
+                    if collisionRadius(perso.rect, ghost.rect) or collideObstacles(perso):
+                        perso.rect = perso.rect.move(0, 2)
+                elif event.key == K_DOWN:
+                    perso.image = pygame.image.load("perso_bas.png")
+                    perso.rect = perso.rect.move(0, 2)
+                    if collisionRadius(perso.rect, ghost.rect) or collideObstacles(perso):
+                        perso.rect = perso.rect.move(0, -2)
+                elif event.key == K_LEFT:
+                    perso.image = pygame.image.load("perso_gauche.png")
+                    perso.rect = perso.rect.move(-2, 0)
+                    if collisionRadius(perso.rect, ghost.rect) or collideObstacles(perso):
+                        perso.rect = perso.rect.move(2, 0)
+                elif event.key == K_RIGHT:
+                    perso.image = pygame.image.load("perso.png")
+                    perso.rect = perso.rect.move(2, 0)
+                    if collisionRadius(perso.rect, ghost.rect) or collideObstacles(perso):
+                        perso.rect = perso.rect.move(-2, 0)
+                elif event.key == K_ESCAPE:
+                    menu_jeu = 0
+                    menu_accueil = 1
+            if event.type == QUIT:
+                menu_jeu = 0
+                menu_accueil = 0
+                appli = 0
+        obstacles_group.draw(fenetre)
+        player_group.draw(fenetre)
+        ghosts.draw(fenetre)
+        pygame.display.flip()
 
 pygame.quit()
