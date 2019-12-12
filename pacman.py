@@ -11,13 +11,6 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(topleft=pos)
 
 
-def collisionRadius(joueur, collision):
-    if math.sqrt((collision.x - joueur.x) ** 2 + (collision.y - joueur.y) ** 2) <= 28:
-        return True
-    else:
-        return False
-
-
 pygame.init()
 
 pygame.mixer.music.load("music.mp3")
@@ -147,6 +140,24 @@ piece15.rect = piece15.image.get_rect()
 piece15.rect.topleft = (464, 126)
 piece15.mask = pygame.mask.from_surface(piece15.image)
 
+piece15a = Sprite()
+piece15a.image = pygame.image.load("piece15.png")
+piece15a.rect = piece15a.image.get_rect()
+piece15a.rect.topleft = (216, 532)
+piece15a.mask = pygame.mask.from_surface(piece15a.image)
+
+piece15b = Sprite()
+piece15b.image = pygame.image.load("piece15.png")
+piece15b.rect = piece15b.image.get_rect()
+piece15b.rect.topleft = (343, 532)
+piece15b.mask = pygame.mask.from_surface(piece15b.image)
+
+piece15c = Sprite()
+piece15c.image = pygame.image.load("piece15.png")
+piece15c.rect = piece15c.image.get_rect()
+piece15c.rect.topleft = (470, 532)
+piece15c.mask = pygame.mask.from_surface(piece15c.image)
+
 piece16 = Sprite()
 piece16.image = pygame.image.load("piece16.png")
 piece16.rect = piece16.image.get_rect()
@@ -166,16 +177,8 @@ piece18.rect.topleft = (370, 126)
 piece18.mask = pygame.mask.from_surface(piece18.image)
 
 obstacles_group.add(ch, cb, start, piece1, piece2, piece3, piece4, piece4b, piece5, piece6, piece6b, piece7, piece8,
-                    piece9, piece10, piece11, piece12, piece13, piece14, piece15, piece16, piece17, piece18)
-
-
-def collideObstacles(sprite):
-    b = False
-    for sprites in obstacles_group.sprites():
-        if pygame.sprite.collide_mask(sprite, sprites):
-            b = True
-    return b
-
+                    piece9, piece10, piece11, piece12, piece13, piece14, piece15, piece15a, piece15b, piece15c,
+                    piece16, piece17, piece18)
 
 perso = Player((288, 270), pygame.image.load("perso.png"))
 perso.mask = pygame.mask.from_surface(perso.image)
@@ -191,8 +194,39 @@ ghost.mask = pygame.mask.from_surface(ghost.image)
 ghosts = pygame.sprite.Group()
 ghosts.add(ghost)
 
+scoins = pygame.sprite.Group()
+scoins.add(None)
+
+
+def collideObstacles(sprite):
+    b = False
+    for sprites in obstacles_group.sprites():
+        if pygame.sprite.collide_mask(sprite, sprites):
+            b = True
+    return b
+
+
+def collisionGhostRadius(joueur):
+    b = False
+    for sprites in ghosts.sprites():
+        if math.sqrt((sprites.rect.x - joueur.x) ** 2 + (sprites.rect.y - joueur.y) ** 2) <= 28:
+            b = True
+    return b
+
+
+def exitPlayzone(joueur):
+    if 0 < joueur.rect.x < 572 and 0 < joueur.rect.y < 572:
+        return False
+    else:
+        return True
+
+
+def autoGhostMove():
+    for scoins in ghosts.sprites():
+        None
+
+
 pygame.display.flip()
-pygame.key.set_repeat(10)
 
 background_accueil = pygame.image.load("background_accueil.jpg")
 
@@ -209,16 +243,37 @@ quitter.mask = pygame.mask.from_surface(quitter.image)
 buttons = pygame.sprite.Group()
 buttons.add(jouer, quitter)
 
+background_win = pygame.image.load("ecran_win.jpg")
+background_lose = pygame.image.load("ecran_lose.jpg")
+
 appli = 1
 menu_accueil = 1
 menu_jeu = 0
+menu_fin = 0
+
+death = False
+win = None
+direction = None
+
+
+def checkWin():
+    if len(scoins) <= 0:
+        pygame.mixer.music.fadeout(1500)
+        menu_jeu = 0
+        menu_accueil = 0
+        win = False
+        menu_fin = 1
+
 
 while appli:
+    pygame.mixer.music.set_volume(0.3)
     while menu_accueil:
         fenetre.blit(background_accueil, (0, 0))
         if not pygame.mixer.music.get_busy():
             pygame.mixer.music.load("music.mp3")
             pygame.mixer.music.play(-1)
+
+        pygame.mixer.music.set_volume(0.3)
 
         for event in pygame.event.get():
             if event.type == MOUSEBUTTONDOWN:
@@ -230,7 +285,7 @@ while appli:
             elif event.type == MOUSEBUTTONUP:
                 if event.button == 1:
                     if 141 < event.pos[0] < 458 and 243 < event.pos[1] < 355:
-                        pygame.mixer.music.fadeout(2000)
+                        pygame.mixer.music.fadeout(1500)
                         menu_accueil = 0
                         menu_jeu = 1
                     else:
@@ -256,41 +311,114 @@ while appli:
             pygame.mixer.music.load("playing.mp3")
             pygame.mixer.music.play(-1)
 
+        pygame.mixer.music.set_volume(0.15)
+
         if pygame.mixer.music.get_pos() < 5:
             pygame.mixer.music.set_pos(5)
 
         for event in pygame.event.get():
             if event.type == KEYDOWN:
                 if event.key == K_UP:
-                    perso.image = pygame.image.load("perso_haut.png")
-                    perso.rect = perso.rect.move(0, -2)
-                    if collisionRadius(perso.rect, ghost.rect) or collideObstacles(perso):
-                        perso.rect = perso.rect.move(0, 2)
+                    if direction == "up":
+                        direction = None
+                    else:
+                        direction = "up"
                 elif event.key == K_DOWN:
-                    perso.image = pygame.image.load("perso_bas.png")
-                    perso.rect = perso.rect.move(0, 2)
-                    if collisionRadius(perso.rect, ghost.rect) or collideObstacles(perso):
-                        perso.rect = perso.rect.move(0, -2)
+                    if direction == "down":
+                        direction = None
+                    else:
+                        direction = "down"
                 elif event.key == K_LEFT:
-                    perso.image = pygame.image.load("perso_gauche.png")
-                    perso.rect = perso.rect.move(-2, 0)
-                    if collisionRadius(perso.rect, ghost.rect) or collideObstacles(perso):
-                        perso.rect = perso.rect.move(2, 0)
+                    if direction == "left":
+                        direction = None
+                    else:
+                        direction = "left"
                 elif event.key == K_RIGHT:
-                    perso.image = pygame.image.load("perso.png")
-                    perso.rect = perso.rect.move(2, 0)
-                    if collisionRadius(perso.rect, ghost.rect) or collideObstacles(perso):
-                        perso.rect = perso.rect.move(-2, 0)
+                    if direction == "right":
+                        direction = None
+                    else:
+                        direction = "right"
+                elif event.key == K_SPACE:
+                    direction = None
                 elif event.key == K_ESCAPE:
+                    pygame.mixer.music.fadeout(1500)
                     menu_jeu = 0
                     menu_accueil = 1
             if event.type == QUIT:
                 menu_jeu = 0
                 menu_accueil = 0
                 appli = 0
+
+        if direction == "up":
+            perso.image = pygame.image.load("perso_haut.png")
+            perso.rect = perso.rect.move(0, -1)
+
+            if collisionGhostRadius(perso.rect):
+                menu_jeu = 0
+                menu_accueil = 0
+                win = False
+                menu_fin = 1
+            elif collideObstacles(perso) or exitPlayzone(perso):
+                perso.rect = perso.rect.move(0, 1)
+        elif direction == "down":
+            perso.image = pygame.image.load("perso_bas.png")
+            perso.rect = perso.rect.move(0, 1)
+            if collisionGhostRadius(perso.rect):
+                menu_jeu = 0
+                menu_accueil = 0
+                win = False
+                menu_fin = 1
+            elif collideObstacles(perso) or exitPlayzone(perso):
+                perso.rect = perso.rect.move(0, -1)
+        elif direction == "left":
+            perso.image = pygame.image.load("perso_gauche.png")
+            perso.rect = perso.rect.move(-1, 0)
+            if collisionGhostRadius(perso.rect):
+                menu_jeu = 0
+                menu_accueil = 0
+                win = False
+                menu_fin = 1
+            elif collideObstacles(perso) or exitPlayzone(perso):
+                perso.rect = perso.rect.move(1, 0)
+        elif direction == "right":
+            perso.image = pygame.image.load("perso.png")
+            perso.rect = perso.rect.move(1, 0)
+            if collisionGhostRadius(perso.rect):
+                menu_jeu = 0
+                menu_accueil = 0
+                win = False
+                menu_fin = 1
+            elif collideObstacles(perso) or exitPlayzone(perso):
+                perso.rect = perso.rect.move(-1, 0)
+            pygame.mixer.music.fadeout(1500)
+            menu_jeu = 0
+            menu_accueil = 0
+            win = False
+            menu_fin = 1
+
         obstacles_group.draw(fenetre)
         player_group.draw(fenetre)
         ghosts.draw(fenetre)
+        pygame.display.flip()
+
+    while menu_fin:
+        if win:
+            fenetre.blit(background_win, (0, 0))
+            if not pygame.mixer.music.get_busy():
+                pygame.mixer.music.load("win.mp3")
+                pygame.mixer.music.play(-1)
+        else:
+            fenetre.blit(background_lose, (0, 0))
+            if not pygame.mixer.music.get_busy():
+                pygame.mixer.music.load("lose.mp3")
+                pygame.mixer.music.play(-1)
+
+        pygame.mixer.music.set_volume(0.50)
+
+        if pygame.mixer.music.get_pos() > 8000:
+            menu_fin = 0
+            appli = 0
+
         pygame.display.flip()
 
 pygame.quit()
